@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE = 'http://127.0.0.1:8000';
+const API_BASE = 'https://intelligent-self-growth-operating-system-production.up.railway.app';
 
 // Create axios instance
 const api = axios.create({
