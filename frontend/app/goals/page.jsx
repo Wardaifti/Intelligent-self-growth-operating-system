@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { getGoals, createGoal, updateGoal } from '../../lib/api';
+import toast from 'react-hot-toast';
 
 export default function GoalsPage() {
   const router = useRouter();
@@ -39,7 +40,9 @@ export default function GoalsPage() {
       await createGoal({ goal: newGoal });
       setNewGoal('');
       fetchGoals();
+      toast.success('Goal added successfully!');
     } catch (err) {
+      toast.error('Could not add goal. Try again.');
       setError('Could not add goal. Try again.');
     } finally {
       setAdding(false);
@@ -50,7 +53,9 @@ export default function GoalsPage() {
     try {
       await updateGoal(id, { status });
       fetchGoals();
+      toast.success(`Goal marked as ${status}!`);
     } catch (err) {
+      toast.error('Could not update goal.');
       setError('Could not update goal.');
     }
   };

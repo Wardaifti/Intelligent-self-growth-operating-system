@@ -2,6 +2,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createEntry } from '../../lib/api';
+import toast from 'react-hot-toast';
 
 export default function JournalPage() {
   const router = useRouter();
@@ -12,7 +13,7 @@ export default function JournalPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const handleSubmit = async () => {
+ const handleSubmit = async () => {
     setLoading(true);
     setError('');
     try {
@@ -22,8 +23,10 @@ export default function JournalPage() {
         progress_text: progress,
         struggle_text: struggle,
       });
+      toast.success('Entry saved! AI is responding...');
       router.push('/dashboard');
     } catch (err) {
+      toast.error('Something went wrong. Try again.');
       setError('Something went wrong. Try again.');
     } finally {
       setLoading(false);
