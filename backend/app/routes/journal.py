@@ -7,6 +7,7 @@ from app.models.models import JournalEntry, AIResponse, User
 from app.schemas.schemas import JournalEntryCreate, JournalEntryOut
 from app.services.auth_service import get_current_user
 from app.services.ai_service import generate_ai_response
+from app.services.memory_service import store_journal_entry
 
 router = APIRouter(prefix="/journal", tags=["Journal"])
 
@@ -47,6 +48,10 @@ def create_entry(
     db.add(ai)
     db.commit()
     db.refresh(ai)
+
+    # Store entry in ChromaDB for memory
+    combined_text = f"Mood: {entry.mood}/10, Energy: {entry.energy_level}/10. Progress: {payload.progress_text or ''}. Struggle: {payload.struggle_text or ''}"
+    store_journal_entry(entry.id, current_user.id, combined_text)
 
     return entry
 

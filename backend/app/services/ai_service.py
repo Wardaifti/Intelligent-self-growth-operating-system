@@ -14,7 +14,6 @@ def get_user_context(user, db: Session) -> dict:
     """Fetches all user history to make AI response personal."""
     from app.models.models import JournalEntry, Goal
 
-    # Last 7 entries
     recent_entries = (
         db.query(JournalEntry)
         .filter(JournalEntry.user_id == user.id)
@@ -23,14 +22,12 @@ def get_user_context(user, db: Session) -> dict:
         .all()
     )
 
-    # Active goals
     active_goals = (
         db.query(Goal)
         .filter(Goal.user_id == user.id, Goal.status == "active")
         .all()
     )
 
-    # Calculate streak
     streak = 0
     today = datetime.utcnow().date()
     for i in range(30):
@@ -41,7 +38,6 @@ def get_user_context(user, db: Session) -> dict:
         else:
             break
 
-    # Average mood and energy
     avg_mood = round(
         sum(e.mood for e in recent_entries) / len(recent_entries), 1
     ) if recent_entries else None
@@ -59,8 +55,8 @@ def get_user_context(user, db: Session) -> dict:
     }
 
 
-def build_system_prompt(user, context: dict) -> str:
-    """Builds a rich prompt using live user data."""
+def build_system_prompt(user, context: dict, similar_memories: list = []) -> str:
+    """Builds a rich prompt using live user data and ChromaDB memories."""
 
     goals_text = "\n".join(
         f"- {g.goal}" for g in context["active_goals"]
@@ -75,6 +71,12 @@ def build_system_prompt(user, context: dict) -> str:
         if entry.struggle_text:
             history_text += f" | Struggle: {entry.struggle_text[:100]}"
 
+    memory_text = ""
+    if similar_memories:
+        memory_text = "\n\nRELEVANT PAST MEMORIES (similar situations):\n"
+        for i, memory in enumerate(similar_memories):
+            memory_text += f"\n{i+1}. {memory}"
+
     return f"""You are an emotionally intelligent AI mentor inside a personal growth operating system.
 
 USER PROFILE:
@@ -88,6 +90,7 @@ ACTIVE GOALS:
 
 RECENT HISTORY:
 {history_text or "No previous entries yet."}
+{memory_text}
 
 YOUR RULES:
 1. Be personal — reference their actual history and goals.
@@ -95,7 +98,8 @@ YOUR RULES:
 3. Be empathetic — acknowledge their mood and energy first.
 4. Keep response under 150 words.
 5. End with ONE concrete action they can do today.
-6. Never say "I understand how you feel" — show it through their data.
+6. If relevant memories exist, reference them specifically.
+7. Never say "I understand how you feel" — show it through their data.
 """
 
 
@@ -108,9 +112,15 @@ def generate_ai_response(
     db: Session
 ) -> str:
     """Main function — returns personalized AI response string."""
+    from app.services.memory_service import search_similar_entries
 
     context = get_user_context(user, db)
-    system_prompt = build_system_prompt(user, context)
+
+    # Search for similar past entries using ChromaDB
+    query = f"mood {mood} energy {energy_level} {struggle_text or ''}"
+    similar_memories = search_similar_entries(user.id, query)
+
+    system_prompt = build_system_prompt(user, context, similar_memories)
 
     user_message = f"""Today's check-in:
 Mood: {mood}/10
