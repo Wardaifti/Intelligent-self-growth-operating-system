@@ -75,6 +75,21 @@ export default function Dashboard() {
         </h1>
         <div style={{ display: 'flex', gap: '12px' }}>
   <button
+    onClick={() => router.push('/chat')}
+    style={{
+      padding: '10px 20px',
+      background: 'linear-gradient(135deg, #7c3aed, #06b6d4)',
+      border: 'none',
+      borderRadius: '8px',
+      color: 'white',
+      fontSize: '14px',
+      fontWeight: '600',
+      cursor: 'pointer',
+    }}
+  >
+    💬 AI Mentor
+  </button>
+  <button
     onClick={() => router.push('/analytics')}
     style={{
       padding: '10px 20px',
