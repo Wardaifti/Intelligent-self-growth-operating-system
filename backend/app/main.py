@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from app.database.connection import engine, Base
-from app.routes import auth, journal, goals, analytics
+from app.routes import auth, journal, goals, analytics, chat
 
 # Create all database tables automatically
 Base.metadata.create_all(bind=engine)
@@ -29,6 +29,7 @@ app.include_router(auth.router)
 app.include_router(journal.router)
 app.include_router(goals.router)
 app.include_router(analytics.router)
+app.include_router(chat.router)
 
 
 @app.get("/")
